@@ -1,13 +1,13 @@
 import sys
 import pygame
-import time
 from hero import Player
-from Grass import Border
+from grass import Border
 from load_image import load_image
 
 FPS = 50
-STEP = 10
-G = 1
+STEP = 3
+JUMP = 10
+G = 3
 
 pygame.init()
 size = width, height = 500, 500
@@ -23,6 +23,28 @@ tile_images = {
 }
 tile_width = tile_height = 50
 
+class Camera:
+    def __init__(self, field_size):
+        self.dx = 0
+        self.dy = 0
+        self.field_size = field_size
+
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        if obj.rect.x < -obj.rect.width:
+            obj.rect.x += (self.field_size[0] + 1) * obj.rect.width
+        if obj.rect.x >= self.field_size[0] * obj.rect.width:
+            obj.rect.x += (self.field_size[0] + 1) * (-obj.rect.width)
+        obj.rect.y += self.dy
+        if obj.rect.y < -obj.rect.height:
+            obj.rect.y += (self.field_size[1] + 1) * obj.rect.height
+        if obj.rect.y >= self.field_size[1] * obj.rect.height:
+            obj.rect.y += (self.field_size[1] + 1) * (-obj.rect.height)
+
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
+
 
 def terminate():
     pygame.quit()
@@ -31,23 +53,49 @@ def terminate():
 
 if __name__ == "__main__":
     running = True
+    camera = Camera((width, height))
     player = Player(G, player_group, all_sprites, tiles_group, player_image, 250, 200)
     for i in range(100):
         Border(tiles_group, all_sprites, tile_images, i * 16, 300)
+    motion = 0
+    jump = 0
+    jumpCount = 10
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    player.rect.x -= STEP
-                if event.key == pygame.K_RIGHT:
-                    player.rect.x += STEP
+                if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                    motion = 1
+                if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                    motion = 2
                 if event.key == pygame.K_SPACE and pygame.sprite.spritecollideany(player, tiles_group):
-                    for i in range(10):
-                        player.rect.y -= STEP / 5
+                    jump = 1
+            elif event.type == pygame.KEYUP:
+                if event.key in [pygame.K_LEFT, pygame.K_RIGHT, pygame.K_a, pygame.K_d]:
+                    motion = 0
+                if event.key == pygame.K_SPACE:
+                    jump = 0
+        if motion == 1:
+            player.rect.x -= STEP
+        elif motion == 2:
+            player.rect.x += STEP
+        keys = pygame.key.get_pressed()
+        if jumpCount >= 0 and jump:
+            player.rect.y -= (jumpCount * abs(jumpCount)) * 0.25
+            jumpCount -= 1
+        else:
+            if pygame.sprite.spritecollideany(player, tiles_group) and keys[pygame.K_SPACE]:
+                jumpCount = 10
+                jump = 1
+            else:
+                jumpCount = 10
+                jump = 0
         player.update()
-        screen.fill((255, 255, 255))
+        camera.update(player)
+        for sprite in all_sprites:
+            camera.apply(sprite)
+        screen.fill((0, 204, 204))
         tiles_group.draw(screen)
         player_group.draw(screen)
         pygame.display.flip()
@@ -126,24 +174,3 @@ if __name__ == "__main__":
 #     return new_player, x, y
 #
 #
-# class Camera:
-#     def __init__(self, field_size):
-#         self.dx = 0
-#         self.dy = 0
-#         self.field_size = field_size
-#
-#     def apply(self, obj):
-#         obj.rect.x += self.dx
-#         if obj.rect.x < -obj.rect.width:
-#             obj.rect.x += (self.field_size[0] + 1) * obj.rect.width
-#         if obj.rect.x >= self.field_size[0] * obj.rect.width:
-#             obj.rect.x += (self.field_size[0] + 1) * (-obj.rect.width)
-#         obj.rect.y += self.dy
-#         if obj.rect.y < -obj.rect.height:
-#             obj.rect.y += (self.field_size[1] + 1) * obj.rect.height
-#         if obj.rect.y >= self.field_size[1] * obj.rect.height:
-#             obj.rect.y += (self.field_size[1] + 1) * (-obj.rect.height)
-#
-#     def update(self, target):
-#         self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
-#         self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
