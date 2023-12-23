@@ -4,13 +4,14 @@ from hero import Player
 from grass import Border
 from load_image import load_image
 
-FPS = 50
-STEP = 3
-JUMP = 10
+FPS = 60
 G = 3
+Velocity = 3.4
+JUMP = 10
+SPEED = 0
 
 pygame.init()
-size = width, height = 500, 500
+size = width, height = 1600, 960
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
@@ -22,6 +23,7 @@ tile_images = {
     'grass': load_image('grassUP.png')
 }
 tile_width = tile_height = 50
+
 
 class Camera:
     def __init__(self, field_size):
@@ -54,44 +56,44 @@ def terminate():
 if __name__ == "__main__":
     running = True
     camera = Camera((width, height))
-    player = Player(G, player_group, all_sprites, tiles_group, player_image, 250, 200)
+    player = Player(G, SPEED, JUMP, player_group, all_sprites, tiles_group, player_image, 250, 200)
     for i in range(100):
         Border(tiles_group, all_sprites, tile_images, i * 16, 300)
-    motion = 0
+    motion_left = 0
+    motion_right = 0
     jump = 0
-    jumpCount = 10
+    jumpCount = JUMP
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                    motion = 1
-                if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                    motion = 2
-                if event.key == pygame.K_SPACE and pygame.sprite.spritecollideany(player, tiles_group):
+                    motion_left = 1
+                elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                    motion_right = 1
+                if (event.key == pygame.K_SPACE or event.key == pygame.K_UP) \
+                        and pygame.sprite.spritecollideany(player, tiles_group):
                     jump = 1
             elif event.type == pygame.KEYUP:
-                if event.key in [pygame.K_LEFT, pygame.K_RIGHT, pygame.K_a, pygame.K_d]:
-                    motion = 0
+                if event.key in [pygame.K_RIGHT, pygame.K_d]:
+                    motion_right = 0
+                if event.key in [pygame.K_a, pygame.K_LEFT]:
+                    motion_left = 0
                 if event.key == pygame.K_SPACE:
                     jump = 0
-        if motion == 1:
-            player.rect.x -= STEP
-        elif motion == 2:
-            player.rect.x += STEP
         keys = pygame.key.get_pressed()
         if jumpCount >= 0 and jump:
             player.rect.y -= (jumpCount * abs(jumpCount)) * 0.25
             jumpCount -= 1
         else:
-            if pygame.sprite.spritecollideany(player, tiles_group) and keys[pygame.K_SPACE]:
-                jumpCount = 10
+            if pygame.sprite.spritecollideany(player, tiles_group) and (keys[pygame.K_SPACE] or keys[pygame.K_UP]):
+                jumpCount = player.JUMP
                 jump = 1
             else:
-                jumpCount = 10
+                jumpCount = player.JUMP
                 jump = 0
-        player.update()
+        player.update(motion_right, motion_left, jump, Velocity)
         camera.update(player)
         for sprite in all_sprites:
             camera.apply(sprite)
