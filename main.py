@@ -1,7 +1,7 @@
 import sys
 import pygame
 from hero import Player
-from grass import Border
+from border import Border
 from load_image import load_image
 
 FPS = 60
@@ -20,9 +20,35 @@ player_group = pygame.sprite.Group()
 player = None
 player_image = load_image('hero.png')
 tile_images = {
-    'grass': load_image('grassUP.png')
+    '-1': load_image('grassUP.png'),
+    '-2': load_image('snow.png'),
+    '1': load_image('dirt.png'),
+    '2': load_image('cobble.png')
 }
+filename = "level.txt"
 tile_width = tile_height = 50
+
+
+def load_level(filename):
+    filename = 'data/' + filename
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+    max_width = max(map(len, level_map))
+    return list(map(lambda x: x.ljust(max_width, '0'), level_map))
+
+
+def generate_level(level):
+    new_player, x, y = None, None, None
+    for y in range(len(level)):
+        for x in range(len(level[y])):
+            if level[y][x] == "1":
+                Border(tile_images["1"], tiles_group, all_sprites, x * 16, y * 16)
+            elif level[y][x] == '2':
+                Border(tile_images["2"], tiles_group, all_sprites, x * 16, y * 16)
+            elif level[y][x] == '9':
+                new_player = Player(G, SPEED, JUMP, player_group, all_sprites, tiles_group, player_image, x * 16,
+                                    y * 16)
+    return new_player, x, y
 
 
 class Camera:
@@ -55,10 +81,8 @@ def terminate():
 
 if __name__ == "__main__":
     running = True
+    player, level_x, level_y = generate_level(load_level('level1.txt'))
     camera = Camera((width, height))
-    player = Player(G, SPEED, JUMP, player_group, all_sprites, tiles_group, player_image, 250, 200)
-    for i in range(100):
-        Border(tiles_group, all_sprites, tile_images, i * 16, 300)
     motion_left = 0
     motion_right = 0
     jump = 0
@@ -87,12 +111,8 @@ if __name__ == "__main__":
             player.rect.y -= (jumpCount * abs(jumpCount)) * 0.25
             jumpCount -= 1
         else:
-            if pygame.sprite.spritecollideany(player, tiles_group) and (keys[pygame.K_SPACE] or keys[pygame.K_UP]):
-                jumpCount = player.JUMP
-                jump = 1
-            else:
-                jumpCount = player.JUMP
-                jump = 0
+            jumpCount = JUMP
+            jump = 0
         player.update(motion_right, motion_left, jump, Velocity)
         camera.update(player)
         for sprite in all_sprites:
@@ -161,18 +181,5 @@ if __name__ == "__main__":
 #                 self.rect.y -= args[0] * STEP
 #
 #
-# def generate_level(level):
-#     new_player, x, y = None, None, None
-#     for y in range(len(level)):
-#         for x in range(len(level[y])):
-#             if level[y][x] == '.':
-#                 Tile('empty', x, y)
-#             elif level[y][x] == '#':
-#                 Tile('wall', x, y)
-#                 Border(x, y)
-#             elif level[y][x] == '@':
-#                 Tile('empty', x, y)
-#                 new_player = Player(x, y)
-#     return new_player, x, y
 #
 #
