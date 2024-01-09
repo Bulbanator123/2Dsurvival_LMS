@@ -1,6 +1,6 @@
 import pygame
 
-
+f = "left"
 class Player(pygame.sprite.Sprite):
     def __init__(self, G, SPEED, JUMP, player_group, all_sprites, border_sprites, player_image, pos_x, pos_y):
         super().__init__(player_group, all_sprites)
@@ -20,6 +20,7 @@ class Player(pygame.sprite.Sprite):
             if pygame.sprite.collide_mask(self, border):
                 c = 0
                 break
+        global f
         if c:
             self.rect = self.rect.move(0, self.vy)
         if motion_left and motion_right:
@@ -27,8 +28,17 @@ class Player(pygame.sprite.Sprite):
         elif motion_left:
             self.SPEED = min(Velocity, self.SPEED + 1)
             self.rect.x -= self.SPEED
+            if f == "right":
+                f = "left"
+                self.flip()
         elif motion_right:
             self.SPEED = min(Velocity, self.SPEED + 1)
             self.rect.x += self.SPEED
+            if f == "left":
+                f = "right"
+                self.flip()
         else:
             self.SPEED = max(self.SPEED - 1, 0)
+
+    def flip(self):
+        self.image = pygame.transform.flip(self.image, True, False)

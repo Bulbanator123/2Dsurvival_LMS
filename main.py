@@ -4,21 +4,21 @@ from hero import Player
 from border import Border
 from load_image import load_image
 
-FPS = 60
+FPS = 30
 G = 3
 Velocity = 3.4
 JUMP = 10
 SPEED = 0
 
 pygame.init()
-size = width, height = 1600, 960
+size = width, height = 1600, 1000
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 player = None
-player_image = load_image('hero.png')
+player_image = load_image("hero_idle_animated1.png")
 tile_images = {
     '-1': load_image('grassUP.png'),
     '-2': load_image('snow.png'),
@@ -27,6 +27,50 @@ tile_images = {
 }
 filename = "level.txt"
 tile_width = tile_height = 50
+
+class AnimatedSprite(pygame.sprite.Sprite):
+    def __init__(self, sheet, columns, rows, x, y):
+        super().__init__(all_sprites)
+        self.frames = []
+        self.cut_sheet(sheet, columns, rows)
+        self.cur_frame = 0
+        self.image = self.frames[self.cur_frame]
+        self.rect = self.rect.move(x, y)
+
+    def cut_sheet(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                                sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(
+                    frame_location, self.rect.size)))
+
+    def update(self):
+        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+        self.image = self.frames[self.cur_frame]
+def start_screen():
+    intro_text = ["Aiarret", "", "", "", "Выбор мира"]
+    fon = pygame.transform.scale(load_image('fon.jpg'), (width, height))
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 172)
+    text_coord = 50
+    for line in intro_text:
+        s_render = font.render(line, True, pygame.Color(0, 150, 0))
+        intro_rect = s_render.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = width / 2 - 250
+        text_coord += intro_rect.height
+        screen.blit(s_render, intro_rect)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                return
+        pygame.display.flip()
+        clock.tick(FPS)
 
 
 def load_level(filename):
@@ -81,6 +125,7 @@ def terminate():
 
 if __name__ == "__main__":
     running = True
+    start_screen()
     player, level_x, level_y = generate_level(load_level('level1.txt'))
     camera = Camera((width, height))
     motion_left = 0
@@ -124,18 +169,6 @@ if __name__ == "__main__":
         clock.tick(FPS)
     terminate()
 
-#
-#
-# def load_level(filename):
-#     filename = 'data/' + filename
-#     with open(filename, 'r') as mapFile:
-#         level_map = [line.strip() for line in mapFile]
-#     max_width = max(map(len, level_map))
-#     return list(map(lambda x: x.ljust(max_width, '.'), level_map))
-#
-#
-#
-#
 # def start_screen():
 #     intro_text = ["ЗАСТАВКА", "", "Правила игра", "Если в правилах несколько строк,",
 #                   "приходится выводить их построчно"]
