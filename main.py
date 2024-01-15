@@ -3,11 +3,12 @@ import pygame
 from hero import Player
 from border import Border
 from load_image import load_image
+from make_world import make_world
 
 FPS = 30
-G = 3
-Velocity = 3.4
-JUMP = 10
+G = 7
+Velocity = 10.4
+JUMP = 20
 SPEED = 0
 
 pygame.init()
@@ -18,42 +19,21 @@ all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 player = None
-player_image = load_image("hero_idle_animated1.png")
 tile_images = {
-    '-1': load_image('grassUP.png'),
+    '3': load_image('grassUP.png'),
     '-2': load_image('snow.png'),
     '1': load_image('dirt.png'),
-    '2': load_image('cobble.png')
+    '2': load_image('cobble.png'),
+    "-1": load_image('black.png')
 }
 filename = "level.txt"
 tile_width = tile_height = 50
 
-class AnimatedSprite(pygame.sprite.Sprite):
-    def __init__(self, sheet, columns, rows, x, y):
-        super().__init__(all_sprites)
-        self.frames = []
-        self.cut_sheet(sheet, columns, rows)
-        self.cur_frame = 0
-        self.image = self.frames[self.cur_frame]
-        self.rect = self.rect.move(x, y)
-
-    def cut_sheet(self, sheet, columns, rows):
-        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
-                                sheet.get_height() // rows)
-        for j in range(rows):
-            for i in range(columns):
-                frame_location = (self.rect.w * i, self.rect.h * j)
-                self.frames.append(sheet.subsurface(pygame.Rect(
-                    frame_location, self.rect.size)))
-
-    def update(self):
-        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-        self.image = self.frames[self.cur_frame]
 def start_screen():
-    intro_text = ["Aiarret", "", "", "", "Выбор мира"]
+    intro_text = ["Aiarret", "", "Выбор мира"]
     fon = pygame.transform.scale(load_image('fon.jpg'), (width, height))
     screen.blit(fon, (0, 0))
-    font = pygame.font.Font(None, 172)
+    font = pygame.font.Font(None, 150)
     text_coord = 50
     for line in intro_text:
         s_render = font.render(line, True, pygame.Color(0, 150, 0))
@@ -89,16 +69,38 @@ def generate_level(level):
                 Border(tile_images["1"], tiles_group, all_sprites, x * 16, y * 16)
             elif level[y][x] == '2':
                 Border(tile_images["2"], tiles_group, all_sprites, x * 16, y * 16)
+            elif level[y][x] == '3':
+                Border(tile_images["3"], tiles_group, all_sprites, x * 16, y * 16)
             elif level[y][x] == '9':
-                new_player = Player(G, SPEED, JUMP, player_group, all_sprites, tiles_group, player_image, x * 16,
+                new_player = Player(G, SPEED, JUMP, player_group, all_sprites, tiles_group, x * 16,
                                     y * 16)
     return new_player, x, y
+
+# В разработке
+#     return None
+#
+#
+# def on_click(self, cell_coords):
+#     global turn
+#     if not turn and cell_coords is not None:
+#         turn = self.board[cell_coords[0]][cell_coords[1]]
+#     if cell_coords is not None and self.board[cell_coords[0]][cell_coords[1]] == turn:
+#         for i in range(self.height):
+#             self.board[i][cell_coords[1]] = turn
+#         for i in range(self.width):
+#             self.board[cell_coords[0]][i] = turn
+#         turn = (turn % 2) + 1
+#
+def get_click(self, mouse_pos):
+    cell = self.get_cell(mouse_pos)
+    self.on_click(cell)
 
 
 class Camera:
     def __init__(self, field_size):
         self.dx = 0
         self.dy = 0
+        self.x = 150 * 8
         self.field_size = field_size
 
     def apply(self, obj):
@@ -114,7 +116,12 @@ class Camera:
             obj.rect.y += (self.field_size[1] + 1) * (-obj.rect.height)
 
     def update(self, target):
-        self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
+        if 1200 < self.x - (target.rect.x + target.rect.w // 2 - width // 2) or self.x - (
+                target.rect.x + target.rect.w // 2 - width // 2) < 400:
+            self.dx = 0
+        else:
+            self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
+            self.x += -(target.rect.x + target.rect.w // 2 - width // 2)
         self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
 
 
@@ -126,12 +133,17 @@ def terminate():
 if __name__ == "__main__":
     running = True
     start_screen()
+    make_world('level1.txt')
     player, level_x, level_y = generate_level(load_level('level1.txt'))
     camera = Camera((width, height))
     motion_left = 0
     motion_right = 0
     jump = 0
     jumpCount = JUMP
+    for i in range(200):
+        Border(tile_images["-1"], tiles_group, all_sprites, -1 * 16, i * 16)
+    for i in range(200):
+        Border(tile_images["-1"], tiles_group, all_sprites, 150 * 16, i * 16)
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -141,8 +153,7 @@ if __name__ == "__main__":
                     motion_left = 1
                 elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                     motion_right = 1
-                if (event.key == pygame.K_SPACE or event.key == pygame.K_UP) \
-                        and pygame.sprite.spritecollideany(player, tiles_group):
+                if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
                     jump = 1
             elif event.type == pygame.KEYUP:
                 if event.key in [pygame.K_RIGHT, pygame.K_d]:
@@ -151,13 +162,17 @@ if __name__ == "__main__":
                     motion_left = 0
                 if event.key == pygame.K_SPACE:
                     jump = 0
-        keys = pygame.key.get_pressed()
-        if jumpCount >= 0 and jump:
-            player.rect.y -= (jumpCount * abs(jumpCount)) * 0.25
+            # В разработке
+            # elif event.type == pygame.MOUSEBUTTONDOWN:
+            #     Border.get_click(event.pos)
+        if jumpCount >= 0 and jump and player.check_collision(0, 100, tiles_group):
+            print(jumpCount)
+            player.move(0, -jumpCount, player.border_sprites)
             jumpCount -= 1
         else:
-            jumpCount = JUMP
+            jumpCount = player.JUMP
             jump = 0
+        keys = pygame.key.get_pressed()
         player.update(motion_right, motion_left, jump, Velocity)
         camera.update(player)
         for sprite in all_sprites:
@@ -168,51 +183,3 @@ if __name__ == "__main__":
         pygame.display.flip()
         clock.tick(FPS)
     terminate()
-
-# def start_screen():
-#     intro_text = ["ЗАСТАВКА", "", "Правила игра", "Если в правилах несколько строк,",
-#                   "приходится выводить их построчно"]
-#     fon = pygame.transform.scale(load_image('fon.jpg'), (width, height))
-#     screen.blit(fon, (0, 0))
-#     font = pygame.font.Font(None, 30)
-#     text_coord = 50
-#     for line in intro_text:
-#         s_render = font.render(line, True, pygame.Color("black"))
-#         intro_rect = s_render.get_rect()
-#         text_coord += 10
-#         intro_rect.top = text_coord
-#         intro_rect.x = 10
-#         text_coord += intro_rect.height
-#         screen.blit(s_render, intro_rect)
-#     while True:
-#         for event in pygame.event.get():
-#             if event.type == pygame.QUIT:
-#                 terminate()
-#             elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-#                 return
-#         pygame.display.flip()
-#         clock.tick(FPS)
-#
-#
-#
-#
-# class Tile(pygame.sprite.Sprite):
-#     def __init__(self, tile_type, pos_x, pos_y):
-#         super().__init__(tiles_group, all_sprites)
-#         self.image = tile_images[tile_type]
-#         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
-#
-#
-#
-#
-#
-#     def update(self, *args):
-#         if pygame.sprite.spritecollideany(self, border_group):
-#             if args[1] == "x":
-#                 self.rect.x -= args[0] * STEP
-#             if args[1] == "y":
-#                 self.rect.y -= args[0] * STEP
-#
-#
-#
-#
