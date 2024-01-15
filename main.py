@@ -12,12 +12,14 @@ JUMP = 20
 SPEED = 0
 
 pygame.init()
+current_world = 1
 size = width, height = 1600, 1000
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
+level_group = pygame.sprite.Group()
 player = None
 tile_images = {
     '3': load_image('grassUP.png'),
@@ -26,29 +28,56 @@ tile_images = {
     '2': load_image('cobble.png'),
     "-1": load_image('black.png')
 }
-filename = "level.txt"
+filename = {1: "level1", 2: "level2", 3: "level3", 4: "level4", 5: "level5"}
 tile_width = tile_height = 50
 
+
+class Level(pygame.sprite.Sprite):
+    def __init__(self, current_number, x, y):
+        super().__init__(level_group, all_sprites)
+        self.current_number = current_number
+        self.image = load_image(f"{filename[current_number]}.jpg")
+        self.rect = self.image.get_rect().move(x, y)
+
+    def return_current_number(self):
+        return self.current_number
+
+
 def start_screen():
-    intro_text = ["Aiarret", "", "Выбор мира"]
+    intro_text = ["Aiarret", "", "", "", "Выбор мира"]
     fon = pygame.transform.scale(load_image('fon.jpg'), (width, height))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 150)
-    text_coord = 50
+    text_coord = 30
     for line in intro_text:
-        s_render = font.render(line, True, pygame.Color(0, 150, 0))
+        s_render = font.render(line, True, pygame.Color(0, 10, 0))
         intro_rect = s_render.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
-        intro_rect.x = width / 2 - 250
+        intro_rect.x = width / 2 - 250 - text_coord / 2
         text_coord += intro_rect.height
         screen.blit(s_render, intro_rect)
+    text_coord = 700
+    x = 200
+    for i in range(1, 6):
+        image = Level(i, x, text_coord)
+        s_image = image.image
+        s_render = s_image.get_rect()
+        s_render.width = 200
+        s_render.height = 200
+        s_render.y = text_coord
+        s_render.x = x
+        screen.blit(s_image, s_render)
+        x += 250
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                return
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                for el in level_group:
+                    if el.rect.collidepoint(event.pos):
+                        current_world = el.return_current_number()
+                        return
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -76,10 +105,8 @@ def generate_level(level):
                                     y * 16)
     return new_player, x, y
 
+
 # В разработке
-#     return None
-#
-#
 # def on_click(self, cell_coords):
 #     global turn
 #     if not turn and cell_coords is not None:
@@ -91,9 +118,6 @@ def generate_level(level):
 #             self.board[cell_coords[0]][i] = turn
 #         turn = (turn % 2) + 1
 #
-def get_click(self, mouse_pos):
-    cell = self.get_cell(mouse_pos)
-    self.on_click(cell)
 
 
 class Camera:
@@ -133,8 +157,8 @@ def terminate():
 if __name__ == "__main__":
     running = True
     start_screen()
-    make_world('level1.txt')
-    player, level_x, level_y = generate_level(load_level('level1.txt'))
+    make_world(f'{filename[current_world]}.txt')
+    player, level_x, level_y = generate_level(load_level(f'{filename[current_world]}.txt'))
     camera = Camera((width, height))
     motion_left = 0
     motion_right = 0
@@ -166,7 +190,6 @@ if __name__ == "__main__":
             # elif event.type == pygame.MOUSEBUTTONDOWN:
             #     Border.get_click(event.pos)
         if jumpCount >= 0 and jump and player.check_collision(0, 100, tiles_group):
-            print(jumpCount)
             player.move(0, -jumpCount, player.border_sprites)
             jumpCount -= 1
         else:

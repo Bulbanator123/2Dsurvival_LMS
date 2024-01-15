@@ -81,6 +81,15 @@ class Player(pygame.sprite.Sprite):
             #     self.flip()
             self.SPEED = max(self.SPEED - 1, 0)
 
+    def idle_animation(self):
+        pass
+
+    def walk_animation(self):
+        pass
+
+    def jump_animation(self):
+        pass
+
     def flip(self):
         self.image = pygame.transform.flip(self.image, True, False)
 
