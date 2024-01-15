@@ -29,4 +29,3 @@ def make_world(filename):
 
 
 
-make_world("data/level1.txt")

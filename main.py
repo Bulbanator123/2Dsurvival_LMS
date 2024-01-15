@@ -40,7 +40,7 @@ class Level(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(x, y)
 
     def return_current_number(self):
-        return self.current_number
+        return int(self.current_number)
 
 
 def start_screen():
@@ -76,6 +76,7 @@ def start_screen():
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 for el in level_group:
                     if el.rect.collidepoint(event.pos):
+                        global current_world
                         current_world = el.return_current_number()
                         return
         pygame.display.flip()
@@ -186,8 +187,7 @@ if __name__ == "__main__":
                     motion_left = 0
                 if event.key == pygame.K_SPACE:
                     jump = 0
-            # В разработке
-            # elif event.type == pygame.MOUSEBUTTONDOWN:
+            # elif event.type == pygame.MOUSEBUTTONDOWN and event.key == pygame.:
             #     Border.get_click(event.pos)
         if jumpCount >= 0 and jump and player.check_collision(0, 100, tiles_group):
             player.move(0, -jumpCount, player.border_sprites)
