@@ -6,3 +6,6 @@ class Border(pygame.sprite.Sprite):
         super().__init__(border_group, all_sprites)
         self.image = border_image
         self.rect = self.image.get_rect().move(pos_x, pos_y)
+
+    def get_click(self):
+        ...

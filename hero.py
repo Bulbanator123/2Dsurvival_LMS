@@ -25,7 +25,7 @@ class Player(pygame.sprite.Sprite):
         c = 1
         self.Move = 1
         global f
-        if self.check_collision(0, 10, self.border_sprites):
+        if self.check_collision(0, 1, self.border_sprites):
             c = 0
         if c == 1:
             self.move(0, self.vy, self.border_sprites)
