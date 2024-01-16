@@ -53,7 +53,7 @@ class Button(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(x, y)
 
     def update(self):
-        self.rect = self.image.get_rect().move_ip(self.x, self.y)
+        self.rect = self.image.get_rect().move(self.x, self.y)
 
 
 def start_screen():
@@ -168,7 +168,7 @@ if __name__ == "__main__":
         Border(tile_images["-1"], tiles_group, all_sprites, -1 * 16 + 3, i * 16)
     for i in range(200):
         Border(tile_images["-1"], tiles_group, all_sprites, 150 * 16, i * 16)
-    Button(1000, 200)
+    button = Button(1500, 100)
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -187,7 +187,7 @@ if __name__ == "__main__":
                     motion_left = 0
                 if event.key == pygame.K_SPACE:
                     jump = 0
-            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.key == pygame.:
                 Border.get_click(event.pos)
         if jumpCount >= 0 and jump and player.check_collision(0, 100, tiles_group):
             player.move(0, -jumpCount, player.border_sprites)
@@ -207,8 +207,10 @@ if __name__ == "__main__":
         keys = pygame.key.get_pressed()
         player.update(motion_right, motion_left, jump, Velocity)
         camera.update(player)
+        button.update()
         for sprite in all_sprites:
-            camera.apply(sprite)
+            if sprite not in button_group:
+                camera.apply(sprite)
         screen.fill((0, 204, 204))
         tiles_group.draw(screen)
         player_group.draw(screen)
