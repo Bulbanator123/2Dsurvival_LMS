@@ -47,7 +47,7 @@ class Level(pygame.sprite.Sprite):
 class Button(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__(button_group, all_sprites)
-        self.image = load_image(f"black.png")
+        self.image = load_image(f"End_Button.png")
         self.x = x
         self.y = y
         self.rect = self.image.get_rect().move(x, y)
@@ -168,7 +168,7 @@ if __name__ == "__main__":
         Border(tile_images["-1"], tiles_group, all_sprites, -1 * 16 + 3, i * 16)
     for i in range(200):
         Border(tile_images["-1"], tiles_group, all_sprites, 150 * 16, i * 16)
-    button = Button(1500, 100)
+    button = Button(1400, 50)
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -187,7 +187,7 @@ if __name__ == "__main__":
                     motion_left = 0
                 if event.key == pygame.K_SPACE:
                     jump = 0
-            elif event.type == pygame.MOUSEBUTTONDOWN and event.key == pygame.:
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                 Border.get_click(event.pos)
         if jumpCount >= 0 and jump and player.check_collision(0, 100, tiles_group):
             player.move(0, -jumpCount, player.border_sprites)
