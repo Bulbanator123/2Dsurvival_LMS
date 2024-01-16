@@ -20,9 +20,10 @@ all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 level_group = pygame.sprite.Group()
+button_group = pygame.sprite.Group()
 player = None
 tile_images = {
-    '3': load_image('grassUP.png'),
+    '3': load_image('grassUp.png'),
     '-2': load_image('snow.png'),
     '1': load_image('dirt.png'),
     '2': load_image('cobble.png'),
@@ -41,6 +42,18 @@ class Level(pygame.sprite.Sprite):
 
     def return_current_number(self):
         return int(self.current_number)
+
+
+class Button(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__(button_group, all_sprites)
+        self.image = load_image(f"black.png")
+        self.x = x
+        self.y = y
+        self.rect = self.image.get_rect().move(x, y)
+
+    def update(self):
+        self.rect = self.image.get_rect().move_ip(self.x, self.y)
 
 
 def start_screen():
@@ -107,20 +120,6 @@ def generate_level(level):
     return new_player, x, y
 
 
-# В разработке
-# def on_click(self, cell_coords):
-#     global turn
-#     if not turn and cell_coords is not None:
-#         turn = self.board[cell_coords[0]][cell_coords[1]]
-#     if cell_coords is not None and self.board[cell_coords[0]][cell_coords[1]] == turn:
-#         for i in range(self.height):
-#             self.board[i][cell_coords[1]] = turn
-#         for i in range(self.width):
-#             self.board[cell_coords[0]][i] = turn
-#         turn = (turn % 2) + 1
-#
-
-
 class Camera:
     def __init__(self, field_size):
         self.dx = 0
@@ -166,9 +165,10 @@ if __name__ == "__main__":
     jump = 0
     jumpCount = JUMP
     for i in range(200):
-        Border(tile_images["-1"], tiles_group, all_sprites, -1 * 16, i * 16)
+        Border(tile_images["-1"], tiles_group, all_sprites, -1 * 16 + 3, i * 16)
     for i in range(200):
         Border(tile_images["-1"], tiles_group, all_sprites, 150 * 16, i * 16)
+    Button(1000, 800)
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -195,6 +195,13 @@ if __name__ == "__main__":
         else:
             jumpCount = player.JUMP
             jump = 0
+        if not jump and player.check_collision(0, 10, tiles_group) and not (motion_right or motion_left):
+            player.idle_animation_f()
+        elif not jump and player.check_collision(0, 10, tiles_group) and (motion_right or motion_left):
+            player.walk_animation_f()
+        else:
+            player.make_zero()
+            player.jump_animation()
         keys = pygame.key.get_pressed()
         player.update(motion_right, motion_left, jump, Velocity)
         camera.update(player)
@@ -203,6 +210,7 @@ if __name__ == "__main__":
         screen.fill((0, 204, 204))
         tiles_group.draw(screen)
         player_group.draw(screen)
+        button_group.draw(screen)
         pygame.display.flip()
         clock.tick(FPS)
     terminate()

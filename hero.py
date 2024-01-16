@@ -29,66 +29,45 @@ class Player(pygame.sprite.Sprite):
             c = 0
         if c == 1:
             self.move(0, self.vy, self.border_sprites)
-        # В разработке
-        #     self.image = load_image("hero_jump_animated.png")
-        #     self.mask = pygame.mask.from_surface(self.image)
-        # else:
-        #     ...
-        #     self.image = load_image("hero_idle_animated1.png")
-        #     self.mask = pygame.mask.from_surface(self.image)\
         if motion_left and motion_right:
-            # В разработке
-            # if not c:
-            #     self.image = load_image(f"hero_walk_animated{self.idle_animation}.png")
-            #     self.walk_animation %= 4
-            #     self.walk_animation += 1
-            #     self.mask = pygame.mask.from_surface(self.image)
-            #     if f == "right":
-            #         self.flip()
-            ...
+            pass
         elif motion_left:
             self.SPEED = min(Velocity, self.SPEED + 1)
             self.move(-self.SPEED, 0, self.border_sprites)
-            # В разработке
-            # if not c:
-            #     self.image = load_image(f"hero_walk_animated{self.idle_animation}.png")
-            #     self.walk_animation %= 4
-            #     self.walk_animation += 1
             if f == "right":
                 f = "left"
                 self.flip()
         elif motion_right:
             self.SPEED = min(Velocity, self.SPEED + 1)
             self.move(self.SPEED, 0, self.border_sprites)
-            # В разработке
-            # print(c)
-            # if not c:
-            #     self.image = load_image(f"hero_walk_animated{self.idle_animation}.png")
-            #     self.walk_animation %= 4
-            #     self.walk_animation += 1
-            #     self.flip()
             if f == "left":
                 f = "right"
                 self.flip()
         else:
-            # В разработке
-            # if not c:
-            #     self.image = load_image(f"hero_idle_animated{self.idle_animation}.png")
-            #     self.idle_animation %= 4
-            #     self.idle_animation += 1
-            #     self.mask = pygame.mask.from_surface(self.image)
-            # if f == "left":
-            #     self.flip()
             self.SPEED = max(self.SPEED - 1, 0)
 
-    def idle_animation(self):
-        pass
+    def idle_animation_f(self):
+        self.idle_animation %= 2
+        self.idle_animation += 1
+        self.image = load_image(f"hero_idle_animated{self.idle_animation}.png")
+        if f == "right":
+            self.flip()
 
-    def walk_animation(self):
-        pass
+    def walk_animation_f(self):
+        self.idle_animation %= 2
+        self.idle_animation += 1
+        self.image = load_image(f"hero_walk_animated{self.idle_animation}.png")
+        if f == "right":
+            self.flip()
 
     def jump_animation(self):
-        pass
+        self.image = load_image("hero_jump_animated.png")
+        if f == "right":
+            self.flip()
+
+    def make_zero(self):
+        self.idle_animation = 1
+        self.walk_animation = 1
 
     def flip(self):
         self.image = pygame.transform.flip(self.image, True, False)
