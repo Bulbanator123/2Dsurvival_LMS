@@ -6,10 +6,11 @@ f = "left"
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, G, SPEED, JUMP, player_group, all_sprites, border_sprites, pos_x, pos_y):
+    def __init__(self, G, SPEED, JUMP, player_group, all_sprites, border_sprites1, border_sprites2, pos_x, pos_y):
         super().__init__(player_group, all_sprites)
         self.image = load_image("hero_idle_animated1.png")
-        self.border_sprites = border_sprites
+        self.border_sprites = border_sprites1
+        self.border_sprites.add(border_sprites2, border_sprites1)
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect().move(pos_x, pos_y)
         self.JUMP = JUMP
@@ -54,7 +55,7 @@ class Player(pygame.sprite.Sprite):
             self.flip()
 
     def walk_animation_f(self):
-        self.idle_animation %= 2
+        self.idle_animation %= 4
         self.idle_animation += 1
         self.image = load_image(f"hero_walk_animated{self.idle_animation}.png")
         if f == "right":

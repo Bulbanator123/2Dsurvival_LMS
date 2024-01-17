@@ -10,6 +10,8 @@ G = 7
 Velocity = 10.4
 JUMP = 20
 SPEED = 0
+DELETE_BLOCKS = 0
+PLACE_BLOCKS = 0
 
 pygame.init()
 current_world = 1
@@ -21,6 +23,7 @@ tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 level_group = pygame.sprite.Group()
 button_group = pygame.sprite.Group()
+border_group = pygame.sprite.Group()
 player = None
 tile_images = {
     '3': load_image('grassUp.png'),
@@ -54,6 +57,28 @@ class Button(pygame.sprite.Sprite):
 
     def update(self):
         self.rect = self.image.get_rect().move(self.x, self.y)
+
+
+def delete():
+    for el in tiles_group:
+        if el.rect.collidepoint(event.pos) and el not in border_group:
+            tiles_group.remove(el)
+            global DELETE_BLOCKS
+            DELETE_BLOCKS += 1
+
+
+def place():
+    for el in tiles_group:
+        if el.rect.collidepoint(event.pos):
+            return
+    for i in range(player.rect.centerx - 32, player.rect.centerx + 32):
+        for j in range(player.rect.centery - 32, player.rect.centery + 32):
+            if event.pos[0] == i and event.pos[1] == j:
+                return
+    Border(tile_images["1"], tiles_group, all_sprites, (event.pos[0] - event.pos[0] % 16),
+           (event.pos[1] - event.pos[1] % 16))
+    global PLACE_BLOCKS
+    PLACE_BLOCKS += 1
 
 
 def start_screen():
@@ -115,7 +140,7 @@ def generate_level(level):
             elif level[y][x] == '3':
                 Border(tile_images["3"], tiles_group, all_sprites, x * 16, y * 16)
             elif level[y][x] == '9':
-                new_player = Player(G, SPEED, JUMP, player_group, all_sprites, tiles_group, x * 16,
+                new_player = Player(G, SPEED, JUMP, player_group, all_sprites, tiles_group, border_group, x * 16,
                                     y * 16)
     return new_player, x, y
 
@@ -158,16 +183,16 @@ if __name__ == "__main__":
     running = True
     start_screen()
     make_world(f'{filename[current_world]}.txt')
+    for i in range(200):
+        Border(tile_images["-1"], border_group, all_sprites, -1 * 16 + 3, i * 16)
+    for i in range(200):
+        Border(tile_images["-1"], border_group, all_sprites, 150 * 16, i * 16)
     player, level_x, level_y = generate_level(load_level(f'{filename[current_world]}.txt'))
     camera = Camera((width, height))
     motion_left = 0
     motion_right = 0
     jump = 0
     jumpCount = JUMP
-    for i in range(200):
-        Border(tile_images["-1"], tiles_group, all_sprites, -1 * 16 + 3, i * 16)
-    for i in range(200):
-        Border(tile_images["-1"], tiles_group, all_sprites, 150 * 16, i * 16)
     button = Button(1400, 50)
     while running:
         for event in pygame.event.get():
@@ -187,9 +212,11 @@ if __name__ == "__main__":
                     motion_left = 0
                 if event.key == pygame.K_SPACE:
                     jump = 0
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                delete()
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-                Border.get_click(event.pos)
-        if jumpCount >= 0 and jump and player.check_collision(0, 100, tiles_group):
+                place()
+        if jumpCount >= 0 and jump:
             player.move(0, -jumpCount, player.border_sprites)
             jumpCount -= 1
         else:
