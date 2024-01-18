@@ -22,7 +22,6 @@ class Player(pygame.sprite.Sprite):
         self.Move = 1
 
     def update(self, motion_right, motion_left, jump, Velocity):
-        jumpCount = self.JUMP
         c = 1
         self.Move = 1
         global f

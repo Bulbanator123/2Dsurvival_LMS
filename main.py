@@ -15,6 +15,7 @@ PLACE_BLOCKS = 0
 
 pygame.init()
 current_world = 1
+Update_lvl = 0
 size = width, height = 1600, 1000
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
@@ -26,14 +27,30 @@ button_group = pygame.sprite.Group()
 border_group = pygame.sprite.Group()
 player = None
 tile_images = {
+    '8': load_image('sand.png'),
+    '7': load_image('jungle_dirtUp.png'),
+    '6': load_image('jungle_dirt.png'),
+    '5': load_image('sandblock_underground.png'),
+    '4': load_image('snow.png'),
     '3': load_image('grassUp.png'),
-    '-2': load_image('snow.png'),
     '1': load_image('dirt.png'),
     '2': load_image('cobble.png'),
-    "-1": load_image('black.png')
+    "-1": load_image('black.png'),
 }
-filename = {1: "level1", 2: "level2", 3: "level3", 4: "level4", 5: "level5"}
+current_block = "1"
+filename = {1: "level1",
+            2: "level2",
+            3: "level3",
+            4: "level4",
+            5: "level5"}
 tile_width = tile_height = 50
+
+
+class PNG(pygame.sprite.Sprite):
+    def __init__(self, x, y, name):
+        super().__init__(level_group, all_sprites)
+        self.image = load_image(f"{name}.png")
+        self.rect = self.image.get_rect().move(x, y)
 
 
 class Level(pygame.sprite.Sprite):
@@ -59,46 +76,105 @@ class Button(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(self.x, self.y)
 
 
+def get_cell(mouse_pos):
+    x = mouse_pos[1] // 16
+    y = mouse_pos[0] // 16
+    if 0 <= x < 150 and 0 <= y < 150:
+        return x, y
+    return None
+
+
 def delete():
     for el in tiles_group:
         if el.rect.collidepoint(event.pos) and el not in border_group:
+            if get_cell(event.pos) is None:
+                return
             tiles_group.remove(el)
             global DELETE_BLOCKS
             DELETE_BLOCKS += 1
+            save_update(*get_cell(event.pos), "0")
 
 
 def place():
     for el in tiles_group:
         if el.rect.collidepoint(event.pos):
             return
-    for i in range(player.rect.centerx - 32, player.rect.centerx + 32):
+    for x in range(player.rect.centerx - 32, player.rect.centerx + 32):
         for j in range(player.rect.centery - 32, player.rect.centery + 32):
-            if event.pos[0] == i and event.pos[1] == j:
+            if event.pos[0] == x and event.pos[1] == j:
                 return
-    Border(tile_images["1"], tiles_group, all_sprites, (event.pos[0] - event.pos[0] % 16),
-           (event.pos[1] - event.pos[1] % 16))
+    if get_cell(event.pos) is None:
+        return
+    Border(tile_images[current_block], tiles_group, all_sprites, (event.pos[0]) - (event.pos[0] - 8) % 16,
+           (event.pos[1]) - (event.pos[1] - 8) % 16)
+    save_update(*get_cell(event.pos), current_block)
     global PLACE_BLOCKS
     PLACE_BLOCKS += 1
 
 
-def start_screen():
-    intro_text = ["Aiarret", "", "", "", "Выбор мира"]
+def final_screen():
+    intro_text = ["Вы завершили игру!", f"Вы поставили {PLACE_BLOCKS} блоков", f"Вы удалили {DELETE_BLOCKS} блоков"]
     fon = pygame.transform.scale(load_image('fon.jpg'), (width, height))
     screen.blit(fon, (0, 0))
-    font = pygame.font.Font(None, 150)
+    font = pygame.font.Font(None, 72)
+    text_coord = 30
+    for line in intro_text:
+        s_render = font.render(line, True, pygame.Color(0, 0, 0))
+        intro_rect = s_render.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = width / 2 - 250
+        text_coord += intro_rect.height
+        screen.blit(s_render, intro_rect)
+    finalbtn = Button(700, 500)
+    br = finalbtn.rect
+    bi = finalbtn.image
+    screen.blit(bi, br)
+    while True:
+        for nevent in pygame.event.get():
+            if nevent.type == pygame.QUIT:
+                terminate()
+            elif nevent.type == pygame.MOUSEBUTTONDOWN:
+                for el in button_group:
+                    if el.rect.collidepoint(nevent.pos):
+                        return
+        finalbtn.update()
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def save_update(x, y, swap):
+    with open(f"data/{filename[current_world]}.txt", "r") as file:
+        mapa = [i for i in file.readlines() if i != "\n"]
+        m = list(mapa[x])
+        m[y] = swap
+        mapa[x] = "".join(m)
+        with open(f"data/{filename[current_world]}.txt", "w") as file:
+            file.writelines("".join(["".join([str(j) for j in i]) for i in mapa]))
+
+
+def start_screen():
+    intro_text = ["", "", "", "", "Выбор мира"]
+    fon = pygame.transform.scale(load_image('fon.jpg'), (width, height))
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 72)
     text_coord = 30
     for line in intro_text:
         s_render = font.render(line, True, pygame.Color(0, 10, 0))
         intro_rect = s_render.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
-        intro_rect.x = width / 2 - 250 - text_coord / 2
+        intro_rect.x = width / 2 - text_coord / 2
         text_coord += intro_rect.height
         screen.blit(s_render, intro_rect)
+    Game_Name = PNG(500, 30, "Name_of_the_game")
+    gr, gi = Game_Name.rect, Game_Name.image
+    screen.blit(gi, gr)
     text_coord = 700
     x = 200
-    for i in range(1, 6):
-        image = Level(i, x, text_coord)
+    for level in range(1, 6):
+        image = Level(level, x, text_coord)
         s_image = image.image
         s_render = s_image.get_rect()
         s_render.width = 200
@@ -108,22 +184,25 @@ def start_screen():
         screen.blit(s_image, s_render)
         x += 250
     while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        for nevent in pygame.event.get():
+            if nevent.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            elif nevent.type == pygame.MOUSEBUTTONDOWN:
                 for el in level_group:
-                    if el.rect.collidepoint(event.pos):
-                        global current_world
+                    if el.rect.collidepoint(nevent.pos):
+                        global current_world, Update_lvl
+                        if nevent.button == 3:
+                            Update_lvl = 1
                         current_world = el.return_current_number()
+                        print(current_world)
                         return
         pygame.display.flip()
         clock.tick(FPS)
 
 
-def load_level(filename):
-    filename = 'data/' + filename
-    with open(filename, 'r') as mapFile:
+def load_level(level_filename):
+    level_filename = 'data/' + level_filename
+    with open(level_filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
     max_width = max(map(len, level_map))
     return list(map(lambda x: x.ljust(max_width, '0'), level_map))
@@ -139,6 +218,16 @@ def generate_level(level):
                 Border(tile_images["2"], tiles_group, all_sprites, x * 16, y * 16)
             elif level[y][x] == '3':
                 Border(tile_images["3"], tiles_group, all_sprites, x * 16, y * 16)
+            elif level[y][x] == '4':
+                Border(tile_images["4"], tiles_group, all_sprites, x * 16, y * 16)
+            elif level[y][x] == '5':
+                Border(tile_images["5"], tiles_group, all_sprites, x * 16, y * 16)
+            elif level[y][x] == '6':
+                Border(tile_images["6"], tiles_group, all_sprites, x * 16, y * 16)
+            elif level[y][x] == '7':
+                Border(tile_images["7"], tiles_group, all_sprites, x * 16, y * 16)
+            elif level[y][x] == '8':
+                Border(tile_images["8"], tiles_group, all_sprites, x * 16, y * 16)
             elif level[y][x] == '9':
                 new_player = Player(G, SPEED, JUMP, player_group, all_sprites, tiles_group, border_group, x * 16,
                                     y * 16)
@@ -165,8 +254,8 @@ class Camera:
             obj.rect.y += (self.field_size[1] + 1) * (-obj.rect.height)
 
     def update(self, target):
-        if 1200 < self.x - (target.rect.x + target.rect.w // 2 - width // 2) or self.x - (
-                target.rect.x + target.rect.w // 2 - width // 2) < 400:
+        if 1200 <= self.x - (target.rect.x + target.rect.w // 2 - width // 2) or self.x - (
+                target.rect.x + target.rect.w // 2 - width // 2) <= 400:
             self.dx = 0
         else:
             self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
@@ -182,11 +271,13 @@ def terminate():
 if __name__ == "__main__":
     running = True
     start_screen()
-    make_world(f'{filename[current_world]}.txt')
+    new_cur_num = current_world
+    if Update_lvl:
+        make_world(f'{filename[current_world]}.txt')
     for i in range(200):
-        Border(tile_images["-1"], border_group, all_sprites, -1 * 16 + 3, i * 16)
+        Border(tile_images["-1"], border_group, all_sprites, -1 * 16, i * 16)
     for i in range(200):
-        Border(tile_images["-1"], border_group, all_sprites, 150 * 16, i * 16)
+        Border(tile_images["-1"], border_group, all_sprites, 1600, i * 16)
     player, level_x, level_y = generate_level(load_level(f'{filename[current_world]}.txt'))
     camera = Camera((width, height))
     motion_left = 0
@@ -205,6 +296,24 @@ if __name__ == "__main__":
                     motion_right = 1
                 if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
                     jump = 1
+                if event.key == pygame.K_1:
+                    current_block = "1"
+                elif event.key == pygame.K_2:
+                    current_block = "2"
+                elif event.key == pygame.K_3:
+                    current_block = "3"
+                elif event.key == pygame.K_4:
+                    current_block = "4"
+                elif event.key == pygame.K_5:
+                    current_block = "5"
+                elif event.key == pygame.K_6:
+                    current_block = "6"
+                elif event.key == pygame.K_7:
+                    current_block = "7"
+                elif event.key == pygame.K_8:
+                    current_block = "8"
+                elif event.key == pygame.K_9:
+                    current_block = "9"
             elif event.type == pygame.KEYUP:
                 if event.key in [pygame.K_RIGHT, pygame.K_d]:
                     motion_right = 0
@@ -214,6 +323,10 @@ if __name__ == "__main__":
                     jump = 0
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 delete()
+                for el in button_group:
+                    if el.rect.collidepoint(event.pos):
+                        final_screen()
+                        terminate()
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                 place()
         if jumpCount >= 0 and jump:
@@ -236,7 +349,7 @@ if __name__ == "__main__":
         camera.update(player)
         button.update()
         for sprite in all_sprites:
-            if sprite not in button_group:
+            if sprite not in button_group and sprite not in border_group:
                 camera.apply(sprite)
         screen.fill((0, 204, 204))
         tiles_group.draw(screen)
