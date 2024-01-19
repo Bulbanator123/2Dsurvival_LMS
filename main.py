@@ -77,26 +77,26 @@ class Button(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(self.x, self.y)
 
 
-def get_cell(mouse_pos):
-    x = mouse_pos[1] // 16
-    y = mouse_pos[0] // 16
+def get_cell(mouse_pos, DeltaX, DeltaY):
+    x = (mouse_pos[0] + DeltaX // 2 + mouse_pos[0] % 16) // 16
+    y = (mouse_pos[1] - DeltaY + mouse_pos[1] % 16) // 16
     if 0 <= x < 150 and 0 <= y < 150:
         return x, y
     return None
 
 
-def delete():
+def delete(x, y):
     for el in tiles_group:
         if el.rect.collidepoint(event.pos) and el not in border_group:
-            if get_cell(event.pos) is None:
+            if get_cell(event.pos, x, y) is None:
                 return
             tiles_group.remove(el)
             global DELETE_BLOCKS
             DELETE_BLOCKS += 1
-            save_update(*get_cell(event.pos), "0")
+            save_update(*get_cell(event.pos, x, y), "0")
 
 
-def place():
+def place(x, y):
     for el in tiles_group:
         if el.rect.collidepoint(event.pos):
             return
@@ -104,11 +104,11 @@ def place():
         for j in range(player.rect.centery - 32, player.rect.centery + 32):
             if event.pos[0] == x and event.pos[1] == j:
                 return
-    if get_cell(event.pos) is None:
+    if get_cell(event.pos, x, y) is None:
         return
-    Border(tile_images[current_block], tiles_group, all_sprites, (event.pos[0]) - (event.pos[0] - 8) % 16,
-           (event.pos[1]) - (event.pos[1] - 8) % 16)
-    save_update(*get_cell(event.pos), current_block)
+    Border(tile_images[current_block], tiles_group, all_sprites, event.pos[0] - event.pos[0] % 16,
+           event.pos[1] - event.pos[1] % 16)
+    save_update(*get_cell(event.pos, x, y), current_block)
     global PLACE_BLOCKS
     PLACE_BLOCKS += 1
 
@@ -160,9 +160,9 @@ def final_screen():
 def save_update(x, y, swap):
     with open(f"data/{filename[current_world]}.txt", "r") as file:
         mapa = [i for i in file.readlines() if i != "\n"]
-        m = list(mapa[x])
-        m[y] = swap
-        mapa[x] = "".join(m)
+        m = list(mapa[y])
+        m[x] = swap
+        mapa[y] = "".join(m)
         with open(f"data/{filename[current_world]}.txt", "w") as file:
             file.writelines("".join(["".join([str(j) for j in i]) for i in mapa]))
 
@@ -237,6 +237,8 @@ class Camera:
     def __init__(self, field_size):
         self.dx = 0
         self.dy = 0
+        self.DELTAX = 0
+        self.DELTAY = 0
         self.x = 150 * 8
         self.field_size = field_size
 
@@ -260,6 +262,14 @@ class Camera:
             self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
             self.x += -(target.rect.x + target.rect.w // 2 - width // 2)
         self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
+        self.DELTAX += self.dx
+        self.DELTAY += self.dy
+
+    def gDELTAX(self):
+        return self.DELTAX
+
+    def gDELTAY(self):
+        return self.DELTAY
 
 
 def terminate():
@@ -324,21 +334,21 @@ if __name__ == "__main__":
                 if event.key == pygame.K_SPACE:
                     jump = 0
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                delete()
+                delete(camera.gDELTAX(), camera.gDELTAY())
                 for el in button_group:
                     if el.rect.collidepoint(event.pos):
                         surface = pygame.Surface((1600, 1000))
                         screen.blit(surface, (0, 0))
                         for el in all_sprites:
-                           all_sprites.remove(el)
+                            all_sprites.remove(el)
                         for el in tiles_group:
-                           tiles_group.remove(el)
+                            tiles_group.remove(el)
                         for el in player_group:
-                           player_group.remove(el)
+                            player_group.remove(el)
                         player = None
                         final_screen()
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-                place()
+                place(camera.gDELTAX(), camera.gDELTAY())
         if not GAME_ACTIVE:
             if jumpCount >= 0 and jump:
                 player.move(0, -jumpCount, player.border_sprites)
