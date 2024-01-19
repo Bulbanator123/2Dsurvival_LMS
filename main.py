@@ -12,6 +12,7 @@ JUMP = 20
 SPEED = 0
 DELETE_BLOCKS = 0
 PLACE_BLOCKS = 0
+GAME_ACTIVE = 0
 
 pygame.init()
 current_world = 1
@@ -147,9 +148,11 @@ def final_screen():
             elif nevent.type == pygame.MOUSEBUTTONDOWN:
                 for el in button_group:
                     if el.rect.collidepoint(nevent.pos):
+                        for el in button_group:
+                            button_group.remove(el)
+                        start_screen()
                         return
         finalbtn.update()
-
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -200,11 +203,11 @@ def start_screen():
             elif nevent.type == pygame.MOUSEBUTTONDOWN:
                 for el in level_group:
                     if el.rect.collidepoint(nevent.pos):
-                        global current_world, Update_lvl
+                        global current_world, Update_lvl, GAME_ACTIVE
+                        GAME_ACTIVE = 1
                         if nevent.button == 3:
                             Update_lvl = 1
                         current_world = el.return_current_number()
-                        print(current_world)
                         return
         pygame.display.flip()
         clock.tick(FPS)
@@ -268,20 +271,23 @@ if __name__ == "__main__":
     running = True
     start_screen()
     new_cur_num = current_world
-    if Update_lvl:
-        make_world(f'{filename[current_world]}.txt')
-    for i in range(200):
-        Border(tile_images["-1"], border_group, all_sprites, -1 * 16, i * 16)
-    for i in range(200):
-        Border(tile_images["-1"], border_group, all_sprites, 1600, i * 16)
-    player, level_x, level_y = generate_level(load_level(f'{filename[current_world]}.txt'))
-    camera = Camera((width, height))
-    motion_left = 0
-    motion_right = 0
-    jump = 0
-    jumpCount = JUMP
-    button = Button(1400, 50)
+    GAME_ACTIVE = 1
     while running:
+        if GAME_ACTIVE:
+            if Update_lvl:
+                make_world(f'{filename[current_world]}.txt')
+            for i in range(200):
+                Border(tile_images["-1"], border_group, all_sprites, -1 * 16, i * 16)
+            for i in range(200):
+                Border(tile_images["-1"], border_group, all_sprites, 1600, i * 16)
+            player, level_x, level_y = generate_level(load_level(f'{filename[current_world]}.txt'))
+            camera = Camera((width, height))
+            motion_left = 0
+            motion_right = 0
+            jump = 0
+            jumpCount = JUMP
+            button = Button(1400, 50)
+            GAME_ACTIVE = 0
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -321,32 +327,41 @@ if __name__ == "__main__":
                 delete()
                 for el in button_group:
                     if el.rect.collidepoint(event.pos):
+                        surface = pygame.Surface((1600, 1000))
+                        screen.blit(surface, (0, 0))
+                        for el in all_sprites:
+                           all_sprites.remove(el)
+                        for el in tiles_group:
+                           tiles_group.remove(el)
+                        for el in player_group:
+                           player_group.remove(el)
+                        player = None
                         final_screen()
-                        terminate()
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                 place()
-        if jumpCount >= 0 and jump:
-            player.move(0, -jumpCount, player.border_sprites)
-            jumpCount -= 1
-        else:
-            jumpCount = 0
-            jump = 0
-        if player.check_collision(0, 10, tiles_group):
-            jumpCount = player.JUMP
-        if not jump and player.check_collision(0, 10, tiles_group) and not (motion_right or motion_left):
-            player.idle_animation_f()
-        elif not jump and player.check_collision(0, 10, tiles_group) and (motion_right or motion_left):
-            player.walk_animation_f()
-        else:
-            player.make_zero()
-            player.jump_animation()
-        keys = pygame.key.get_pressed()
-        player.update(motion_right, motion_left, jump, Velocity)
-        camera.update(player)
-        button.update()
-        for sprite in all_sprites:
-            if sprite not in button_group and sprite not in border_group:
-                camera.apply(sprite)
+        if not GAME_ACTIVE:
+            if jumpCount >= 0 and jump:
+                player.move(0, -jumpCount, player.border_sprites)
+                jumpCount -= 1
+            else:
+                jumpCount = 0
+                jump = 0
+            if player.check_collision(0, 10, tiles_group):
+                jumpCount = player.JUMP
+            if not jump and player.check_collision(0, 10, tiles_group) and not (motion_right or motion_left):
+                player.idle_animation_f()
+            elif not jump and player.check_collision(0, 10, tiles_group) and (motion_right or motion_left):
+                player.walk_animation_f()
+            else:
+                player.make_zero()
+                player.jump_animation()
+            keys = pygame.key.get_pressed()
+            player.update(motion_right, motion_left, jump, Velocity)
+            camera.update(player)
+            button.update()
+            for sprite in all_sprites:
+                if sprite not in button_group and sprite not in border_group:
+                    camera.apply(sprite)
         screen.fill((0, 204, 204))
         tiles_group.draw(screen)
         player_group.draw(screen)
