@@ -222,22 +222,8 @@ def generate_level(level):
     new_player, x, y = None, None, None
     for y in range(len(level)):
         for x in range(len(level[y])):
-            if level[y][x] == "1":
-                Border(tile_images["1"], tiles_group, all_sprites, x * 16, y * 16)
-            elif level[y][x] == '2':
-                Border(tile_images["2"], tiles_group, all_sprites, x * 16, y * 16)
-            elif level[y][x] == '3':
-                Border(tile_images["3"], tiles_group, all_sprites, x * 16, y * 16)
-            elif level[y][x] == '4':
-                Border(tile_images["4"], tiles_group, all_sprites, x * 16, y * 16)
-            elif level[y][x] == '5':
-                Border(tile_images["5"], tiles_group, all_sprites, x * 16, y * 16)
-            elif level[y][x] == '6':
-                Border(tile_images["6"], tiles_group, all_sprites, x * 16, y * 16)
-            elif level[y][x] == '7':
-                Border(tile_images["7"], tiles_group, all_sprites, x * 16, y * 16)
-            elif level[y][x] == '8':
-                Border(tile_images["8"], tiles_group, all_sprites, x * 16, y * 16)
+            if level[y][x] not in ["9", "0"]:
+                Border(tile_images[level[y][x]], tiles_group, all_sprites, x * 16, y * 16)
             elif level[y][x] == '9':
                 new_player = Player(G, SPEED, JUMP, player_group, all_sprites, tiles_group, border_group, x * 16,
                                     y * 16)

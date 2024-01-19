@@ -2,8 +2,6 @@ import pygame
 import numpy
 from load_image import load_image
 
-f = "left"
-
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, G, SPEED, JUMP, player_group, all_sprites, border_sprites1, border_sprites2, pos_x, pos_y):
@@ -20,11 +18,11 @@ class Player(pygame.sprite.Sprite):
         self.idle_animation = 1
         self.walk_animation = 1
         self.Move = 1
+        self.f = "left"
 
     def update(self, motion_right, motion_left, jump, Velocity):
         c = 1
         self.Move = 1
-        global f
         if self.check_collision(0, 1, self.border_sprites):
             c = 0
         if c == 1:
@@ -34,14 +32,14 @@ class Player(pygame.sprite.Sprite):
         elif motion_left:
             self.SPEED = min(Velocity, self.SPEED + 1)
             self.move(-self.SPEED, 0, self.border_sprites)
-            if f == "right":
-                f = "left"
+            if self.f == "right":
+                self.f = "left"
                 self.flip()
         elif motion_right:
             self.SPEED = min(Velocity, self.SPEED + 1)
             self.move(self.SPEED, 0, self.border_sprites)
-            if f == "left":
-                f = "right"
+            if self.f == "left":
+                self.f = "right"
                 self.flip()
         else:
             self.SPEED = max(self.SPEED - 1, 0)
@@ -50,19 +48,19 @@ class Player(pygame.sprite.Sprite):
         self.idle_animation %= 2
         self.idle_animation += 1
         self.image = load_image(f"hero_idle_animated{self.idle_animation}.png")
-        if f == "right":
+        if self.f == "right":
             self.flip()
 
     def walk_animation_f(self):
         self.idle_animation %= 4
         self.idle_animation += 1
         self.image = load_image(f"hero_walk_animated{self.idle_animation}.png")
-        if f == "right":
+        if self.f == "right":
             self.flip()
 
     def jump_animation(self):
         self.image = load_image("hero_jump_animated.png")
-        if f == "right":
+        if self.f == "right":
             self.flip()
 
     def make_zero(self):
