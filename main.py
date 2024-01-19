@@ -112,8 +112,18 @@ def place():
     PLACE_BLOCKS += 1
 
 
+def orf(a):
+    if a % 10 == 1 and a % 100 != 11:
+        return ""
+    elif a % 10 in [2, 3, 4] and a % 100 not in [12, 13, 14]:
+        return "a"
+    else:
+        return "ов"
+
+
 def final_screen():
-    intro_text = ["Вы завершили игру!", f"Вы поставили {PLACE_BLOCKS} блоков", f"Вы удалили {DELETE_BLOCKS} блоков"]
+    intro_text = ["Вы завершили игру!", f"Вы поставили {PLACE_BLOCKS} блок{orf(PLACE_BLOCKS)}",
+                  f"Вы удалили {DELETE_BLOCKS} блок{orf(DELETE_BLOCKS)}"]
     fon = pygame.transform.scale(load_image('fon.jpg'), (width, height))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 72)
