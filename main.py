@@ -93,7 +93,7 @@ def delete(x, y):
             tiles_group.remove(el)
             global DELETE_BLOCKS
             DELETE_BLOCKS += 1
-            save_update(*get_cell(event.pos, x, y), "0")
+            save_update(*get_cell((event.pos[0] - event.pos[0] % 16, event.pos[1] - event.pos[1] % 16), -x * 2, y), "0")
 
 
 def place(x, y):
@@ -108,7 +108,7 @@ def place(x, y):
         return
     Border(tile_images[current_block], tiles_group, all_sprites, event.pos[0] - event.pos[0] % 16,
            event.pos[1] - event.pos[1] % 16)
-    save_update(*get_cell(event.pos, x, y), current_block)
+    save_update(*get_cell((event.pos[0] - event.pos[0] % 16, event.pos[1] - event.pos[1] % 16), x, y), current_block)
     global PLACE_BLOCKS
     PLACE_BLOCKS += 1
 
@@ -282,10 +282,12 @@ if __name__ == "__main__":
     start_screen()
     new_cur_num = current_world
     GAME_ACTIVE = 1
+    camera = None
     while running:
         if GAME_ACTIVE:
             if Update_lvl:
                 make_world(f'{filename[current_world]}.txt')
+            Update_lvl = 0
             for i in range(200):
                 Border(tile_images["-1"], border_group, all_sprites, -1 * 16, i * 16)
             for i in range(200):
